@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: homewatch-face-recognition
+
+# ─── AWS Configuration ────────────────────────────────────────────────────────
+aws:
+  region: us-east-1                     # Free Tier: any region, keep consistent
+  # Credentials: prefer IAM Role (EC2/ECS) or environment variables in production.
+  # For local dev, you may also use ~/.aws/credentials — leave blank to use the
+  # default credential provider chain (recommended; avoids secrets in config).
+  credentials:
+    access-key: ${AWS_ACCESS_KEY_ID:}   # set via env var, never hardcode
+    secret-key: ${AWS_SECRET_ACCESS_KEY:}
+  rekognition:
+    collection-id: homewatch-faces      # logical bucket of indexed faces in AWS
+    # Free Tier: 5,000 face-analysis ops/month; 1 GB stored face vectors free
+    confidence-threshold: 90.0          # minimum match % to trigger alert
+
+# ─── Local File Paths ─────────────────────────────────────────────────────────
+app:
+  video:
+    file-path: /data/videos/input.mp4   # path to the video file to analyse
+    frame-interval-seconds: 1           # extract 1 frame per second (cost control)
+    max-faces-per-frame: 5              # cap Rekognition calls per frame
+
+  known-faces:
+    folder-path: /data/known-faces      # folder of reference images (Name.jpg)
+    reindex-on-startup: true            # re-index only when new images are added
+
+  cooldown:
+    duration-minutes: 5                 # ignore same person for N minutes after match
+
+# ─── Logging ─────────────────────────────────────────────────────────────────
+logging:
+  level:
+    root: INFO
+    com.homewatch: DEBUG
+    software.amazon.awssdk: WARN        # suppress verbose SDK wire logs in prod
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
